@@ -1057,7 +1057,7 @@ td{padding:.65rem .68rem;vertical-align:middle;}
 // ── FIREBASE CONFIG ────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyBfM_sIcsVdIwUj6byzTvhg4tINEISMcLE",
-  authDomain: "mypersonalfinanceflow-e46eb.firebaseapp.com",
+  authDomain: "agilecodesi.github.io",
   projectId: "mypersonalfinanceflow-e46eb",
   storageBucket: "mypersonalfinanceflow-e46eb.firebasestorage.app",
   messagingSenderId: "704641167790",
@@ -1083,15 +1083,7 @@ auth.getRedirectResult().then(function(result) {
 
 function loginGoogle() {
   var provider = new firebase.auth.GoogleAuthProvider();
-  // Try popup first, fall back to redirect if blocked
-  auth.signInWithPopup(provider).catch(function(err) {
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-      // Fallback to redirect
-      auth.signInWithRedirect(provider);
-    } else if (err.code !== 'auth/no-auth-event') {
-      alert('Erro ao entrar: ' + err.message);
-    }
-  });
+  auth.signInWithRedirect(provider);
 }
 
 function logoutGoogle() {
