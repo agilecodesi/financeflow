@@ -331,7 +331,9 @@ td{padding:.65rem .68rem;vertical-align:middle;}
   .acc-tab{font-size:.68rem;padding:.25rem .7rem;}
   .alerts-wrap{padding:0 .75rem;}
   main{padding:1rem .75rem 5.5rem;}
-  .summary{grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.25rem;}
+  #stickySummary{grid-template-columns:1fr 1fr;gap:.5rem;padding:.5rem .75rem;}
+  #stickySummary .sum-value{font-size:.95rem;}
+  #stickySummary .sum-label{font-size:.55rem;}
   .sum-card{padding:.85rem 1rem;border-radius:14px;}
   .sum-value{font-size:1.1rem;}
   .sum-label{font-size:.6rem;}
@@ -707,23 +709,29 @@ td{padding:.65rem .68rem;vertical-align:middle;}
   <button class="btn-add-account" onclick="openSettings('accounts')">＋ Nova conta</button>
 </div>
 
-<!-- FIXED SUMMARY BAR (shows when scrolled) -->
-<div class="summary-fixed" id="summaryFixed">
-  <div class="sum-card initial"><div class="sum-label">Saldo Inicial</div><div class="sum-value" id="sumInicialF">R$ 0,00</div></div>
-  <div class="sum-card entries"><div class="sum-label">Entradas</div><div class="sum-value" id="sumEntradasF">R$ 0,00</div></div>
-  <div class="sum-card exits">  <div class="sum-label">Saídas</div>  <div class="sum-value" id="sumSaidasF">R$ 0,00</div></div>
-  <div class="sum-card balance"><div class="sum-label">Saldo Final</div><div class="sum-value" id="sumFinalF">R$ 0,00</div></div>
-</div>
-
 <div class="alerts-wrap" id="alertsWrap" style="margin-top:.75rem"></div>
 
+<!-- STICKY SUMMARY BAR -->
+<div id="stickySummary" style="
+  position:sticky;
+  top:0;
+  z-index:150;
+  background:var(--bg);
+  padding:.6rem 1.5rem;
+  box-shadow:0 2px 12px rgba(26,22,18,.08);
+  border-bottom:1px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:.75rem;
+">
+  <div class="sum-card initial" style="margin:0"><div class="sum-label">Saldo Inicial</div><div class="sum-value" id="sumInicial">R$ 0,00</div></div>
+  <div class="sum-card entries" style="margin:0"><div class="sum-label">Total Entradas</div><div class="sum-value" id="sumEntradas">R$ 0,00</div></div>
+  <div class="sum-card exits"   style="margin:0"><div class="sum-label">Total Saídas</div><div class="sum-value" id="sumSaidas">R$ 0,00</div></div>
+  <div class="sum-card balance" style="margin:0"><div class="sum-label">Saldo Final</div><div class="sum-value" id="sumFinal">R$ 0,00</div></div>
+</div>
+
 <main>
-  <div class="summary" id="summaryMain">
-    <div class="sum-card initial"><div class="sum-label">Saldo Inicial</div><div class="sum-value" id="sumInicial">R$ 0,00</div></div>
-    <div class="sum-card entries"><div class="sum-label">Total Entradas</div><div class="sum-value" id="sumEntradas">R$ 0,00</div></div>
-    <div class="sum-card exits">  <div class="sum-label">Total Saídas</div>  <div class="sum-value" id="sumSaidas">R$ 0,00</div></div>
-    <div class="sum-card balance"><div class="sum-label">Saldo Final</div>   <div class="sum-value" id="sumFinal">R$ 0,00</div></div>
-  </div>
+
 
   <div class="layout">
     <div class="form-card">
@@ -1463,7 +1471,7 @@ function salvarEdicao() {
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────────────
-function renderAll() { renderMonthTabs(); renderSummary(); renderList(); updateHeaderMonth(); updateSaldoBanner(); renderAlerts(); initSummaryObserver(); }
+function renderAll() { renderMonthTabs(); renderSummary(); renderList(); updateHeaderMonth(); updateSaldoBanner(); renderAlerts(); }
 
 function updateHeaderMonth() { document.getElementById('headerMonth').textContent=mesFiltro?mesLabel(mesFiltro):'--'; }
 
@@ -1490,10 +1498,7 @@ function renderSummary() {
   document.getElementById('sumEntradas').textContent=fmt(e);
   document.getElementById('sumSaidas').textContent=fmt(s);
   document.getElementById('sumFinal').textContent=fmt(si+e-s);
-  var fi=document.getElementById('sumInicialF');  if(fi)fi.textContent=fmt(si);
-  var fe=document.getElementById('sumEntradasF'); if(fe)fe.textContent=fmt(e);
-  var fs=document.getElementById('sumSaidasF');   if(fs)fs.textContent=fmt(s);
-  var ff=document.getElementById('sumFinalF');    if(ff)ff.textContent=fmt(si+e-s);
+
 }
 
 function renderList() {
@@ -2237,44 +2242,7 @@ function pickPlanCat(id, tipo, val) {
 
 
 // ── STICKY SUMMARY ─────────────────────────────────────────────────────────
-function syncFixedSummary() {
-  ['Inicial','Entradas','Saidas','Final'].forEach(function(k) {
-    var src = document.getElementById('sum'+k);
-    var dst = document.getElementById('sum'+k+'F');
-    if (src && dst) dst.textContent = src.textContent;
-  });
-}
-
-function initSummaryObserver() {
-  var mainSummary = document.getElementById('summaryMain');
-  var fixedBar    = document.getElementById('summaryFixed');
-  if (!mainSummary || !fixedBar) return;
-
-  if ('IntersectionObserver' in window) {
-    var observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (!entry.isIntersecting) {
-          syncFixedSummary();
-          fixedBar.classList.add('visible');
-        } else {
-          fixedBar.classList.remove('visible');
-        }
-      });
-    }, { threshold: 0, rootMargin: '0px' });
-    observer.observe(mainSummary);
-  } else {
-    // Fallback for older browsers
-    window.addEventListener('scroll', function() {
-      var rect = mainSummary.getBoundingClientRect();
-      if (rect.bottom < 10) {
-        syncFixedSummary();
-        fixedBar.classList.add('visible');
-      } else {
-        fixedBar.classList.remove('visible');
-      }
-    }, { passive: true });
-  }
-}
+// summary is now always visible in sticky bar
 
 function scrollToForm(){var el=document.querySelector('.form-card'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
 function setActiveBnav(btn){document.querySelectorAll('.bnav-btn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active');}
