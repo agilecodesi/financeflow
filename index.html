@@ -1072,18 +1072,25 @@ var currentUser = null;
 
 // Handle redirect result on page load
 auth.getRedirectResult().then(function(result) {
-  // result handled by onAuthStateChanged below
+  if (result && result.user) {
+    console.log('Redirect login success:', result.user.email);
+  }
 }).catch(function(err) {
-  if (err.code !== 'auth/no-auth-event') {
+  if (err.code !== 'auth/no-auth-event' && err.code !== 'auth/null-user') {
     console.error('Redirect error:', err);
-    alert('Erro ao entrar: ' + err.message);
   }
 });
 
 function loginGoogle() {
   var provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider).catch(function(err) {
-    alert('Erro ao entrar: ' + err.message);
+  // Try popup first, fall back to redirect if blocked
+  auth.signInWithPopup(provider).catch(function(err) {
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      // Fallback to redirect
+      auth.signInWithRedirect(provider);
+    } else if (err.code !== 'auth/no-auth-event') {
+      alert('Erro ao entrar: ' + err.message);
+    }
   });
 }
 
